@@ -3,7 +3,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
-public class Site1 implements Update {
+public class Site2 implements Update {
 
     public static final int NUMBER_OF_SITES = 3;
     public static final int NUMBER_OF_LOGICAL_OBJECTS = 5;
@@ -20,26 +20,26 @@ public class Site1 implements Update {
     int sessionNumber;
     int nomimalSessionVector [] = new int[NUMBER_OF_SITES];
 
-    public Site1() {
+    public Site2() {
 
         super();
 
         for (int i = 0; i < NUMBER_OF_LOGICAL_OBJECTS; i++) {
-            this.logicalObjects[i] = 0;
+            logicalObjects[i] = 0;
         }
 
         this.sessionNumber = 0;
 
         for (int i = 0; i < NUMBER_OF_SITES; i++) {
-           this.nomimalSessionVector[i] = 0;
+            nomimalSessionVector[i] = 0;
         }
     }
 
     public boolean performUpdate(int objectNumber, char operation, int updateValue) {
         if (operation == '+') {
-            this.logicalObjects[objectNumber - 1] += updateValue;
+            logicalObjects[objectNumber - 1] += updateValue;
         } else if (operation == '-') {
-            this.logicalObjects[objectNumber - 1] -= updateValue;
+            logicalObjects[objectNumber - 1] -= updateValue;
         } else {
             return false;
         }
@@ -47,20 +47,22 @@ public class Site1 implements Update {
         return true;
     }
 
-    public static void main(String args[])  {
+    public static void main(String args[]) {
 
-        Site1 siteOne = new Site1();
+        Site2 siteTwo = new Site2();
         try {
-            Update updateStub = (Update) UnicastRemoteObject.exportObject(siteOne, 0);
+            Update updateStub = (Update) UnicastRemoteObject.exportObject(siteTwo, 0);
 
             Registry registry = LocateRegistry.getRegistry();
-            registry.bind("Update", updateStub);
+            System.out.println("fokfokfokf");
+            registry.bind("Site2", updateStub);
 
-            System.err.println("Site 1 ready!");
+            System.err.println("Site 2 ready!");
         } catch (Exception e) {
             System.err.println("Encountered an issue.");
             e.printStackTrace();
         }
+
 
 
     }
