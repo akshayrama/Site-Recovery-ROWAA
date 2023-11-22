@@ -5,7 +5,7 @@ public interface Update extends  Remote {
 
     boolean performUpdate(int objectNumber, char operation, int updateValue) throws RemoteException;
 
-    boolean makeFailure(int siteNumber) throws RemoteException;
+    boolean makeFailure() throws RemoteException;
 
     int getSessionNumber() throws RemoteException;
 

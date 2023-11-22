@@ -8,7 +8,7 @@ public class Site2 implements Update {
 
     public static final int NUMBER_OF_SITES = 2;
     public static final int NUMBER_OF_LOGICAL_OBJECTS = 5;
-    public static final String SESSION_NUMBER_FILE_PATH = "sessionNumberLocalStorage/";
+    public static final String SESSION_NUMBER_FILE_PATH = "../sessionNumberLocalStorage/";
 
     // First, we need to define the logical objects that we would use in our transactions
     // For each site, we need a session number, nominal session vector
@@ -51,12 +51,12 @@ public class Site2 implements Update {
         System.out.println();
     }
 
-    public boolean makeFailure(int siteNumber) {
+    public boolean makeFailure() {
         String filePath = SESSION_NUMBER_FILE_PATH + "Site2.txt";
 
         try {
             FileWriter fileWriter = new FileWriter(filePath);
-            fileWriter.write(this.sessionNumber);
+            fileWriter.write(String.valueOf(this.sessionNumber));
             fileWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -71,7 +71,7 @@ public class Site2 implements Update {
 
     public boolean setNominalSessionVector(int failedSite) {
         try {
-            this.nomimalSessionVector[failedSite - 1] = 0;
+            this.nomimalSessionVector[failedSite] = 0;
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -103,7 +103,7 @@ public class Site2 implements Update {
     public boolean performUpdateOnSingleSite(int objectNumber, char operation, int updateValue) {
         if (this.sessionNumber == 0) {
             System.err.println("This site is currently down and cannot accept transactions. ");
-            return true;
+            return false;
         }
 
         if (operation == '+') {

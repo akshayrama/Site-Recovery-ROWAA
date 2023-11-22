@@ -1,5 +1,9 @@
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 public class AcceptTransactions {
 
@@ -28,8 +32,43 @@ public class AcceptTransactions {
             site1.printGlobalView();
             site2.printGlobalView();
 
+            site1.makeFailure();
+
+            site1.printGlobalView();
+            site2.printGlobalView();
+
+            boolean success3 = site1.performUpdate(objectNumber + 2, operation, updateValue + 3);
+
+            site1.printGlobalView();
+            site2.printGlobalView();
+
+            String SESSION_NUMBER_FILE_PATH = "../sessionNumberLocalStorage/";
+            String filePath = SESSION_NUMBER_FILE_PATH + "Site1.txt";
+
+            File file = new File(filePath);
+
+            try {
+                FileReader fileReader = new FileReader(file);
+                BufferedReader bufferedReader = new BufferedReader(fileReader);
+
+                String line;
+                while ((line = bufferedReader.readLine()) != null) {
+                    System.out.println(line); // or do something else with the line
+                }
+
+                bufferedReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            boolean success4 = site2.performUpdate(objectNumber + 1, operation, updateValue + 13);
+
+            site1.printGlobalView();
+            site2.printGlobalView();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 }
