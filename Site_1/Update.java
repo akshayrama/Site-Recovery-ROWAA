@@ -11,9 +11,19 @@ public interface Update extends  Remote {
 
     void updateNominalSessionNumber(int failedSite) throws RemoteException;
 
-    boolean setNominalSessionVector(int failedSite) throws RemoteException;
+    boolean setNominalSessionVector(int site, int value) throws RemoteException;
 
     void printGlobalView() throws RemoteException;
+
+    void publishUpdatedSessionNumbers(int newSessionNumber, int site) throws RemoteException;
+
+    int getLogicalObjectValue(int objectNumber) throws RemoteException;
+
+    void setLogicalObjectValue(int objectNumber, int newObjectValue) throws RemoteException;
+
+    void refeshLogicalObjects() throws RemoteException;
+
+    void initiateRecovery() throws RemoteException;
 
     boolean performUpdateOnSingleSite(int objectNumber, char operation, int updateValue) throws RemoteException;
  }

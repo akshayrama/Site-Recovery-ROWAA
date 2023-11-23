@@ -44,7 +44,7 @@ public class Site1 implements Update {
     }
 
     public void printGlobalView() {
-        System.out.println("----LOGICAL OBJECTS-----");
+        System.out.println("\nList of logical objects in site: " + String.valueOf(this.mySite));
         for (int i = 0; i < NUMBER_OF_LOGICAL_OBJECTS; i++) {
             System.out.println("Obj" + String.valueOf(i + 1) + " : " + String.valueOf(this.logicalObjects[i]));
         }
@@ -64,14 +64,14 @@ public class Site1 implements Update {
         }
         this.sessionNumber = 0;
 
-        System.err.println("Control Transaction: Marking Site " + String.valueOf(mySite) + " as failed. ");
+        System.err.println("Site " + String.valueOf(mySite) + ": Control Transaction: Marking Site " + String.valueOf(mySite) + " as failed. ");
 
         return true;
     }
 
-    public boolean setNominalSessionVector(int failedSite) {
+    public boolean setNominalSessionVector(int site, int value) {
         try {
-            this.nomimalSessionVector[failedSite] = 0;
+            this.nomimalSessionVector[site] = value;
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -79,24 +79,154 @@ public class Site1 implements Update {
         }
     }
 
+    public void publishUpdatedSessionNumbers(int newSessionNumber, int site) {
 
+        for (int i = 0; i < NUMBER_OF_SITES; i++) {
+
+            // Need to get all the stubs of all sites and update the NS vector
+            // With the new session number
+
+            try {
+                String nominalStub = "Site" + String.valueOf(i + 1) + "Update";
+                Registry registry = LocateRegistry.getRegistry();
+                Update stub = (Update) registry.lookup(nominalStub);
+
+                stub.setNominalSessionVector(site - 1, newSessionNumber);
+
+                System.err.println("Site " + String.valueOf(mySite) + ": New Session Number " + String.valueOf(newSessionNumber) + " loaded for Site " +
+                        String.valueOf(site));
+            } catch (Exception e) {
+                System.err.println("Some error occurred. ");
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    public int getLogicalObjectValue(int objectNumber) {
+        return this.logicalObjects[objectNumber - 1];
+    }
+
+    public void setLogicalObjectValue(int objectNumber, int newObjectValue) {
+        this.logicalObjects[objectNumber - 1] = newObjectValue;
+    }
+
+    public void refeshLogicalObjects() {
+
+        // Need to iterate over the NS vector to check if any site is operational
+
+        int siteToRefresh = -1;
+
+        for (int i = 0; i < NUMBER_OF_SITES; i++) {
+            if (this.nomimalSessionVector[i] != 0 && (i + 1) != this.mySite) {
+                siteToRefresh = i;
+                break;
+            }
+        }
+
+        if (siteToRefresh == -1) {
+            System.err.println("Site " + String.valueOf(mySite) + ": There are no other operational sites to execute a copier transaction from. ");
+            return;
+        }
+
+
+        try {
+            String stubName = "Site" + String.valueOf(siteToRefresh + 1) + "Update";
+            Registry registry = LocateRegistry.getRegistry();
+            Update stub = (Update) registry.lookup(stubName);
+
+            for (int i = 1; i <= NUMBER_OF_LOGICAL_OBJECTS; i++) {
+
+                int newValue = stub.getLogicalObjectValue(i);
+                this.setLogicalObjectValue(i, newValue);
+            }
+
+            System.err.println("Site " + String.valueOf(mySite) + ": Copier transaction executed successfully!");
+        } catch(Exception e) {
+            System.err.println("Site " + String.valueOf(mySite) + ": Some issue occurred.");
+            e.printStackTrace();
+        }
+
+    }
+
+
+    public void initiateRecovery() {
+
+        int oldSessionNumber = -1;
+
+        try {
+
+            String filePath = SESSION_NUMBER_FILE_PATH + "Site1.txt";
+            File file = new File(filePath);
+
+            FileReader fileReader = new FileReader(file);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+
+            String line = bufferedReader.readLine();
+            bufferedReader.close();
+
+            oldSessionNumber = Integer.valueOf(line);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        System.err.println("Site " + String.valueOf(mySite) + " is trying to recover. ");
+        System.err.println("Site " + String.valueOf(mySite) + ": Have read the old session number of the site as " + String.valueOf(oldSessionNumber));
+
+        int newSessionNumber = oldSessionNumber + 1;
+
+        // Now we need to let everybody know of the new Session Number of the site.
+        // At this point the site is still is recovery initiation phase
+        // The site needs to execute a copier transaction and set its actual session number as newSessionNumber
+        // for it to be fully operational
+
+        // Even though the site has been failed, its NS vector has been updated accordingly
+        // This failed site can still process control transactions
+        // Just not user transactions
+        // While it's logical data items are out of date, its NS vector should be updated with
+        // the operational sites
+
+        // Next step: publish updated session number to all available sites including its own
+
+        this.publishUpdatedSessionNumbers(newSessionNumber, mySite);
+
+        // Now, the site is in the process of recovery
+        // Next it must execute a copier transaction to refresh all logical objects
+
+        this.refeshLogicalObjects();
+
+        // The logical objects are now refreshed.
+        // Now, we can load the new session number in the actual session number
+
+        this.sessionNumber = newSessionNumber;
+
+        System.err.println("Site " + String.valueOf(mySite) + ": Recovery process completed for site " + String.valueOf(mySite));
+        System.err.println("Site " + String.valueOf(mySite) + ": The site is now fully operational. ");
+
+        return;
+    }
     public void updateNominalSessionNumber(int failedSite) {
         for (int i = 0; i < NUMBER_OF_SITES; i++) {
-            if (this.nomimalSessionVector[i] != 0) {
 
-                try {
-                    String nominalStub = "Site" + String.valueOf(i + 1) + "Update";
-                    Registry registry = LocateRegistry.getRegistry();
-                    Update stub = (Update) registry.lookup(nominalStub);
+            // Don't need to check for all available sites
+            // This is a control transaction of type 2
+            // So this must be executed on all the sites
+            // Irrespective of whether they are available or not
 
-                    stub.setNominalSessionVector(failedSite);
+            try {
+                String nominalStub = "Site" + String.valueOf(i + 1) + "Update";
+                Registry registry = LocateRegistry.getRegistry();
+                Update stub = (Update) registry.lookup(nominalStub);
 
-                    System.err.println("Control transaction: Marked site " + String.valueOf(failedSite) + " as failed. ");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    System.err.println("Failed to update nominal session vector.");
-                }
+                stub.setNominalSessionVector(failedSite, 0);
+
+                System.err.println("Site " + String.valueOf(mySite) + ": Control transaction: Marked site " + String.valueOf(failedSite + 1) + " as failed. ");
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.err.println("Site " + String.valueOf(mySite) + ": Failed to update nominal session vector.");
             }
+
         }
     }
 
