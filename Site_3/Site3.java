@@ -4,7 +4,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.io.*;
 
-public class Site1 implements Update {
+public class Site3 implements Update {
 
     public static final int NUMBER_OF_SITES = 3;
     public static final int NUMBER_OF_LOGICAL_OBJECTS = 5;
@@ -22,9 +22,9 @@ public class Site1 implements Update {
     int sessionNumber;
     int nomimalSessionVector [] = new int[NUMBER_OF_SITES];
 
-    int mySite = 1;
+    int mySite = 3;
 
-    public Site1() {
+    public Site3() {
 
         super();
 
@@ -35,7 +35,7 @@ public class Site1 implements Update {
         this.sessionNumber = 1;
 
         for (int i = 0; i < NUMBER_OF_SITES; i++) {
-           this.nomimalSessionVector[i] = 1;
+            this.nomimalSessionVector[i] = 1;
         }
     }
 
@@ -52,7 +52,7 @@ public class Site1 implements Update {
     }
 
     public boolean makeFailure() {
-        String filePath = SESSION_NUMBER_FILE_PATH + "Site1.txt";
+        String filePath = SESSION_NUMBER_FILE_PATH + "Site3.txt";
 
         try {
             FileWriter fileWriter = new FileWriter(filePath);
@@ -156,7 +156,7 @@ public class Site1 implements Update {
 
         try {
 
-            String filePath = SESSION_NUMBER_FILE_PATH + "Site1.txt";
+            String filePath = SESSION_NUMBER_FILE_PATH + "Site3.txt";
             File file = new File(filePath);
 
             FileReader fileReader = new FileReader(file);
@@ -306,14 +306,14 @@ public class Site1 implements Update {
 
     public static void main(String args[])  {
 
-        Site1 siteOne = new Site1();
+        Site3 siteThree = new Site3();
         try {
-            Update updateStub = (Update) UnicastRemoteObject.exportObject(siteOne, 0);
+            Update updateStub = (Update) UnicastRemoteObject.exportObject(siteThree, 0);
 
             Registry registry = LocateRegistry.getRegistry();
-            registry.bind("Site1Update", updateStub);
+            registry.bind("Site3Update", updateStub);
 
-            System.err.println("Site 1 ready!");
+            System.err.println("Site 3 ready!");
         } catch (Exception e) {
             System.err.println("Encountered an issue.");
             e.printStackTrace();

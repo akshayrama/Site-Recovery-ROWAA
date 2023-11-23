@@ -6,7 +6,7 @@ import java.io.*;
 
 public class Site2 implements Update {
 
-    public static final int NUMBER_OF_SITES = 2;
+    public static final int NUMBER_OF_SITES = 3;
     public static final int NUMBER_OF_LOGICAL_OBJECTS = 5;
     public static final String SESSION_NUMBER_FILE_PATH = "../sessionNumberLocalStorage/";
 
@@ -230,16 +230,27 @@ public class Site2 implements Update {
         }
     }
 
-    public boolean performUpdateOnSingleSite(int objectNumber, char operation, int updateValue) {
+    public boolean performUpdateOnSingleSite(int objectNumber, char operation, int updateValue, int originSite) {
         if (this.sessionNumber == 0) {
             System.err.println("This site is currently down and cannot accept transactions. ");
             return false;
+        }
+
+        if (this.mySite != originSite) {
+            System.err.println("Update given by another site's transaction");
+            System.err.println("Transaction originated at site: " + String.valueOf(originSite));
+        } else {
+            System.err.println("Transaction originated in the current site");
         }
 
         if (operation == '+') {
             this.logicalObjects[objectNumber - 1] += updateValue;
         } else if (operation == '-') {
             this.logicalObjects[objectNumber - 1] -= updateValue;
+        } else if (operation == '*') {
+            this.logicalObjects[objectNumber - 1] *= updateValue;
+        } else if (operation == '/') {
+            this.logicalObjects[objectNumber - 1] /= updateValue;
         } else {
             return false;
         }
@@ -247,9 +258,9 @@ public class Site2 implements Update {
         return true;
     }
 
-    public boolean performUpdate(int objectNumber, char operation, int updateValue) {
+    public boolean performUpdate(int objectNumber, char operation, int updateValue, int originSite) {
 
-        if (!this.performUpdateOnSingleSite(objectNumber, operation, updateValue)) {
+        if (!this.performUpdateOnSingleSite(objectNumber, operation, updateValue, originSite)) {
             System.err.println("Error performing update on site.");
             return false;
         }
@@ -279,7 +290,7 @@ public class Site2 implements Update {
                         continue;
                     }
 
-                    if (!stub.performUpdateOnSingleSite(objectNumber, operation, updateValue)) {
+                    if (!stub.performUpdateOnSingleSite(objectNumber, operation, updateValue, originSite)) {
                         System.err.println("Update is not performed properly on site " + String.valueOf(i + 1));
                     }
                 } catch (Exception e) {

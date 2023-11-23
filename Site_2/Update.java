@@ -3,7 +3,7 @@ import java.rmi.RemoteException;
 
 public interface Update extends  Remote {
 
-    boolean performUpdate(int objectNumber, char operation, int updateValue) throws RemoteException;
+    boolean performUpdate(int objectNumber, char operation, int updateValue, int originSite) throws RemoteException;
 
     boolean makeFailure() throws RemoteException;
 
@@ -25,5 +25,5 @@ public interface Update extends  Remote {
 
     void initiateRecovery() throws RemoteException;
 
-    boolean performUpdateOnSingleSite(int objectNumber, char operation, int updateValue) throws RemoteException;
+    boolean performUpdateOnSingleSite(int objectNumber, char operation, int updateValue, int originSite) throws RemoteException;
 }
