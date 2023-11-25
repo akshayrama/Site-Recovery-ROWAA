@@ -66,6 +66,25 @@ public class Site2 implements Update {
 
         System.err.println("Site " + String.valueOf(mySite) + ": Control Transaction: Marking Site " + String.valueOf(mySite) + " as failed. ");
 
+
+        for (int i = 0; i < NUMBER_OF_SITES; i++) {
+            if ((i + 1) != this.mySite) {
+
+                try {
+                    String stubName = "Site" + String.valueOf(i + 1) + "Update";
+                    Registry registry = LocateRegistry.getRegistry();
+                    Update stub = (Update) registry.lookup(stubName);
+
+                    stub.setNominalSessionVector(this.mySite - 1, 0);
+                    System.err.println("Site " + String.valueOf(i + 1) + ": Control Transaction: Marking Site " + String.valueOf(mySite) + " as failed. ");
+                } catch (Exception e) {
+                    System.err.println("Error in updating NS vector of sites.");
+                    e.printStackTrace();
+                }
+
+            }
+        }
+
         return true;
     }
 
@@ -111,7 +130,7 @@ public class Site2 implements Update {
         this.logicalObjects[objectNumber - 1] = newObjectValue;
     }
 
-    public void refeshLogicalObjects() {
+    public boolean refeshLogicalObjects() {
 
         // Need to iterate over the NS vector to check if any site is operational
 
@@ -126,7 +145,7 @@ public class Site2 implements Update {
 
         if (siteToRefresh == -1) {
             System.err.println("Site " + String.valueOf(mySite) + ": There are no other operational sites to execute a copier transaction from. ");
-            return;
+            return false;
         }
 
 
@@ -146,6 +165,8 @@ public class Site2 implements Update {
             System.err.println("Site " + String.valueOf(mySite) + ": Some issue occurred.");
             e.printStackTrace();
         }
+
+        return true;
 
     }
 
@@ -194,15 +215,18 @@ public class Site2 implements Update {
         // Now, the site is in the process of recovery
         // Next it must execute a copier transaction to refresh all logical objects
 
-        this.refeshLogicalObjects();
+        if (this.refeshLogicalObjects()) {
+            // The logical objects are now refreshed.
+            // Now, we can load the new session number in the actual session number
 
-        // The logical objects are now refreshed.
-        // Now, we can load the new session number in the actual session number
+            this.sessionNumber = newSessionNumber;
 
-        this.sessionNumber = newSessionNumber;
+            System.err.println("Site " + String.valueOf(mySite) + ": Recovery process completed for site " + String.valueOf(mySite));
+            System.err.println("Site " + String.valueOf(mySite) + ": The site is now fully operational. ");
+        } else {
+            System.err.println("Site " + String.valueOf(mySite) + ": The site cannot become operational. ");
+        }
 
-        System.err.println("Site " + String.valueOf(mySite) + ": Recovery process completed for site " + String.valueOf(mySite));
-        System.err.println("Site " + String.valueOf(mySite) + ": The site is now fully operational. ");
 
         return;
     }
@@ -226,7 +250,6 @@ public class Site2 implements Update {
                 e.printStackTrace();
                 System.err.println("Site " + String.valueOf(mySite) + ": Failed to update nominal session vector.");
             }
-
         }
     }
 

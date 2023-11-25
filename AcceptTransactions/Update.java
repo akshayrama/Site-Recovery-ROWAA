@@ -21,7 +21,7 @@ public interface Update extends  Remote {
 
     void setLogicalObjectValue(int objectNumber, int newObjectValue) throws RemoteException;
 
-    void refeshLogicalObjects() throws RemoteException;
+    boolean refeshLogicalObjects() throws RemoteException;
 
     void initiateRecovery() throws RemoteException;
 
