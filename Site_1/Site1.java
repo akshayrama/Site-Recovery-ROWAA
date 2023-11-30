@@ -3,12 +3,15 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.io.*;
+import java.util.StringJoiner;
 
 public class Site1 implements Update {
 
     public static final int NUMBER_OF_SITES = 3;
     public static final int NUMBER_OF_LOGICAL_OBJECTS = 5;
     public static final String SESSION_NUMBER_FILE_PATH = "../sessionNumberLocalStorage/";
+    public static final String BACKLOG_NS_VECTOR_PATH = "../backlogNSVectors/";
+    public static final String FILE_NAME = "Site1.txt";
 
     // First, we need to define the logical objects that we would use in our transactions
     // For each site, we need a session number, nominal session vector
@@ -21,8 +24,6 @@ public class Site1 implements Update {
 
     int sessionNumber;
     int nomimalSessionVector [] = new int[NUMBER_OF_SITES];
-
-    int backlogNSVector [] = new int[NUMBER_OF_SITES];
 
     int mySite = 1;
 
@@ -38,7 +39,6 @@ public class Site1 implements Update {
 
         for (int i = 0; i < NUMBER_OF_SITES; i++) {
             this.nomimalSessionVector[i] = 1;
-            this.backlogNSVector[i] = 1;
         }
     }
 
@@ -55,7 +55,7 @@ public class Site1 implements Update {
     }
 
     public boolean makeFailure() {
-        String filePath = SESSION_NUMBER_FILE_PATH + "Site1.txt";
+        String filePath = SESSION_NUMBER_FILE_PATH + FILE_NAME;
 
         try {
             FileWriter fileWriter = new FileWriter(filePath);
@@ -66,6 +66,26 @@ public class Site1 implements Update {
             return false;
         }
         this.sessionNumber = 0;
+
+        // We also need to write the existing NS vector to local storage
+
+        String backlogNSVectorPath = BACKLOG_NS_VECTOR_PATH + FILE_NAME;
+        StringJoiner joiner = new StringJoiner(",");
+
+        for (int i = 0; i < NUMBER_OF_SITES; i++) {
+            joiner.add(String.valueOf(i+1) + "=" + String.valueOf(this.nomimalSessionVector[i]));
+        }
+
+        String NSVectorToBacklogStorage = joiner.toString();
+
+        try {
+            FileWriter fileWriter = new FileWriter(backlogNSVectorPath);
+            fileWriter.write(String.valueOf(NSVectorToBacklogStorage));
+            fileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
 
         System.err.println("Site " + String.valueOf(mySite) + ": Control Transaction: Marking Site " + String.valueOf(mySite) + " as failed. ");
 
@@ -96,15 +116,48 @@ public class Site1 implements Update {
             // My site is actually failed so I cannot update my NS vector at this time
             // Therefore, I will update my back log NS vector
 
-            this.backlogNSVector[site] = value;
-            return true;
+            // Access the backlog NS for this particular site and update it there
+
+            try {
+
+                String backlogNSVectorPath = BACKLOG_NS_VECTOR_PATH + FILE_NAME;
+                File file = new File(backlogNSVectorPath);
+
+                FileReader fileReader = new FileReader(file);
+                BufferedReader bufferedReader = new BufferedReader(fileReader);
+
+                String line = bufferedReader.readLine();
+                bufferedReader.close();
+                fileReader.close();
+
+                String siteOldNS [] = line.split(",");
+                StringJoiner joiner = new StringJoiner(",");
+
+                for (int i = 0; i < NUMBER_OF_SITES; i++) {
+                    if (i != site) {
+                        joiner.add(siteOldNS[i]);
+                    } else {
+                        joiner.add(String.valueOf(site + 1) + "=" + String.valueOf(value));
+                    }
+                }
+
+                String updatedBacklogNSToWrite = joiner.toString();
+
+                FileWriter fileWriter = new FileWriter(backlogNSVectorPath);
+                fileWriter.write(String.valueOf(updatedBacklogNSToWrite));
+                fileWriter.close();
+
+                return true;
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
         }
 
         try {
             this.nomimalSessionVector[site] = value;
             System.err.println("Site " + String.valueOf(this.mySite) + ": Control Transaction: Marking Site " + String.valueOf(site + 1) + " as failed. ");
-            this.backlogNSVector[site] = value;
-            // Updating the backlog NS vector as well in order to stay consistent
 
             return true;
         } catch (Exception e) {
@@ -195,7 +248,7 @@ public class Site1 implements Update {
 
         try {
 
-            String filePath = SESSION_NUMBER_FILE_PATH + "Site1.txt";
+            String filePath = SESSION_NUMBER_FILE_PATH + FILE_NAME;
             File file = new File(filePath);
 
             FileReader fileReader = new FileReader(file);
@@ -224,9 +277,27 @@ public class Site1 implements Update {
             System.err.print(String.valueOf(this.nomimalSessionVector[i]) + " ");
         }
 
-        // Copying the updated NS vector
-        for (int i = 0; i < NUMBER_OF_SITES; i++) {
-            this.nomimalSessionVector[i] = this.backlogNSVector[i];
+        // Copying the updated NS vector in local storage back to NS vector
+
+        try {
+
+            String backlogNSVectorPath = BACKLOG_NS_VECTOR_PATH + FILE_NAME;
+            File file = new File(backlogNSVectorPath);
+
+            FileReader fileReader = new FileReader(file);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+
+            String line = bufferedReader.readLine();
+            bufferedReader.close();
+
+            String siteOldNS [] = line.split(",");
+
+            for (int i = 0; i < NUMBER_OF_SITES; i++) {
+                this.nomimalSessionVector[i] = Integer.parseInt(siteOldNS[i].split("=")[1]);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         // Also we need to update the new Session Number with the NS vector
