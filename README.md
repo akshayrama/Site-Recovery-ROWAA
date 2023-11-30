@@ -19,7 +19,7 @@ can be supplied to either site using the AcceptTransactions class.
 
 ## Notes on instructions to run:
 
-After cloning this repository, kindly head to the root directory of 
+After downloading this code-base, kindly head to the root directory of 
 the project and run:
 
 ``
@@ -33,7 +33,7 @@ This script would compile all the Java classes and set up initial values for ses
 
 Next, follow the steps given to execute in each terminal.
 
-**NOTE:** Kindly please alter the `java.rmi.server.codebase` value in your runs to match the path to your cloned directory of this repository.
+**NOTE:** Kindly please alter the `java.rmi.server.codebase` value in your runs to match the path to your directory of this code base.
 
 
 #### Terminal 1:
