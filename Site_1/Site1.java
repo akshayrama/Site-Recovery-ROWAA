@@ -22,6 +22,8 @@ public class Site1 implements Update {
     int sessionNumber;
     int nomimalSessionVector [] = new int[NUMBER_OF_SITES];
 
+    int backlogNSVector [] = new int[NUMBER_OF_SITES];
+
     int mySite = 1;
 
     public Site1() {
@@ -36,6 +38,7 @@ public class Site1 implements Update {
 
         for (int i = 0; i < NUMBER_OF_SITES; i++) {
             this.nomimalSessionVector[i] = 1;
+            this.backlogNSVector[i] = 1;
         }
     }
 
@@ -76,7 +79,6 @@ public class Site1 implements Update {
                     Update stub = (Update) registry.lookup(stubName);
 
                     stub.setNominalSessionVector(this.mySite - 1, 0);
-                    System.err.println("Site " + String.valueOf(i + 1) + ": Control Transaction: Marking Site " + String.valueOf(mySite) + " as failed. ");
                 } catch (Exception e) {
                     System.err.println("Error in updating NS vector of sites.");
                     e.printStackTrace();
@@ -89,8 +91,21 @@ public class Site1 implements Update {
     }
 
     public boolean setNominalSessionVector(int site, int value) {
+
+        if (this.sessionNumber == 0) {
+            // My site is actually failed so I cannot update my NS vector at this time
+            // Therefore, I will update my back log NS vector
+
+            this.backlogNSVector[site] = value;
+            return true;
+        }
+
         try {
             this.nomimalSessionVector[site] = value;
+            System.err.println("Site " + String.valueOf(this.mySite) + ": Control Transaction: Marking Site " + String.valueOf(site + 1) + " as failed. ");
+            this.backlogNSVector[site] = value;
+            // Updating the backlog NS vector as well in order to stay consistent
+
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -101,6 +116,10 @@ public class Site1 implements Update {
     public void publishUpdatedSessionNumbers(int newSessionNumber, int site) {
 
         for (int i = 0; i < NUMBER_OF_SITES; i++) {
+
+            if (this.mySite - 1 == i) {
+                continue;
+            }
 
             // Need to get all the stubs of all sites and update the NS vector
             // With the new session number
@@ -118,7 +137,6 @@ public class Site1 implements Update {
                 System.err.println("Some error occurred. ");
                 e.printStackTrace();
             }
-
         }
     }
 
@@ -197,18 +215,36 @@ public class Site1 implements Update {
 
         int newSessionNumber = oldSessionNumber + 1;
 
+        // We need to update the NS vector of this site using the backlog NS updates that we have
+
+        // Currently, we don't have updated NS vector as we have failed
+
+        System.err.print("Old NS vector at the time of failure: ");
+        for (int i = 0; i < NUMBER_OF_SITES; i++) {
+            System.err.print(String.valueOf(this.nomimalSessionVector[i]) + " ");
+        }
+
+        // Copying the updated NS vector
+        for (int i = 0; i < NUMBER_OF_SITES; i++) {
+            this.nomimalSessionVector[i] = this.backlogNSVector[i];
+        }
+
+        // Also we need to update the new Session Number with the NS vector
+
+        this.nomimalSessionVector[this.mySite - 1] = newSessionNumber;
+
+        System.err.print("\nNS vector refreshed with the updated: ");
+        for (int i = 0; i < NUMBER_OF_SITES; i++) {
+            System.err.print(String.valueOf(this.nomimalSessionVector[i]) + " ");
+        }
+        System.out.println();
+
         // Now we need to let everybody know of the new Session Number of the site.
         // At this point the site is still is recovery initiation phase
         // The site needs to execute a copier transaction and set its actual session number as newSessionNumber
         // for it to be fully operational
 
-        // Even though the site has been failed, its NS vector has been updated accordingly
-        // This failed site can still process control transactions
-        // Just not user transactions
-        // While it's logical data items are out of date, its NS vector should be updated with
-        // the operational sites
-
-        // Next step: publish updated session number to all available sites including its own
+        // Next step: publish updated session number to all available sites
 
         this.publishUpdatedSessionNumbers(newSessionNumber, mySite);
 
@@ -232,11 +268,6 @@ public class Site1 implements Update {
     }
     public void updateNominalSessionNumber(int failedSite) {
         for (int i = 0; i < NUMBER_OF_SITES; i++) {
-
-            // Don't need to check for all available sites
-            // This is a control transaction of type 2
-            // So this must be executed on all the sites
-            // Irrespective of whether they are available or not
 
             try {
                 String nominalStub = "Site" + String.valueOf(i + 1) + "Update";
