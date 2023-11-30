@@ -21,3 +21,9 @@ cd /Users/akshay/IdeaProjects/SiteRecoveryROWAA/sessionNumberLocalStorage
 echo 0 > Site1.txt
 echo 0 > Site2.txt
 echo 0 > Site3.txt
+
+cd /Users/akshay/IdeaProjects/SiteRecoveryROWAA/backlogNSVectors/
+
+echo 1=1,2=1,3=1 > Site1.txt
+echo 1=1,2=1,3=1 > Site2.txt
+echo 1=1,2=1,3=1 > Site3.txt
