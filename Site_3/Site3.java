@@ -157,7 +157,11 @@ public class Site3 implements Update {
 
         try {
             this.nomimalSessionVector[site] = value;
-            System.err.println("Site " + String.valueOf(this.mySite) + ": Control Transaction: Marking Site " + String.valueOf(site + 1) + " as failed. ");
+            if (value == 0) {
+                System.err.println("Site " + String.valueOf(this.mySite) + ": Control Transaction: Marking Site " + String.valueOf(site + 1) + " as failed. ");
+            } else {
+                System.err.println("Site " + String.valueOf(this.mySite) + ": Control Transaction: Marking Site " + String.valueOf(site + 1) + " as operational. ");
+            }
 
             return true;
         } catch (Exception e) {

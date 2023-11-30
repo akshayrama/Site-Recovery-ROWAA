@@ -156,14 +156,14 @@ Test cases are given as per these rules:
 6. Failure of all `n` sites, showing that the system cannot be recovered.
        
     ```          
-   TXN,1,-,3,15 
-   FAIL,1       
-   TXN,2,+,4,30 
-   FAIL,2       
-   TXN,3,+,1,1  
-   PRINT 
+   TXN,1,-,3,15
+   FAIL,1 
+   TXN,2,+,4,30
+   FAIL,2 
+   TXN,3,+,1,1
+   PRINT
    FAIL,3
-   RECOVER,1    
-   PRINT                 
+   RECOVER,1
+   PRINT 
     ```          
                 
