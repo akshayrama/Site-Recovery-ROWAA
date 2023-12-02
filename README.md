@@ -92,6 +92,7 @@ Test cases are given as per these rules:
     TXN,2,-,3,15
     PRINT
     TXN,3,+,5,1
+    PRINT
    ```        
    This shows that there are updates being performed on all three sites. Whichever site obtains the transaction
     remotely invokes other sites to write the updated value.
